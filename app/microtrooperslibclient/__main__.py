@@ -1,2 +1,2 @@
-__author__ = "Donatien Vachette"
-__license__ = "GNU GPL v3"
+__author__ = 'Donatien Vachette'
+__license__ = 'GNU GPL v3'

@@ -91,10 +91,38 @@ In this place, the player can modify his in-game settings:
 | Zoom +/-        | Mouse wheel        | Na                   |
 | Select item     | digit keys         | Any keys             |
 
-
 The player can also set his username, his icon, his pseudo color, and manage his account settings.
-
 
 ### 4. Inventory
 
 The player can see here all the items he owns, and he can upgrade and equip some weapons.
+
+## Server
+
+The server is a multithreading program that can handle players connexions, host games, and manage shop.
+
+### Player connexion
+
+When the player tries to connect, the server will check into its database many things:
+
+Is this player banned ?
+
+Does the player need an update or a re-download ?
+
+If the player is banned, the used wi-fi will be added to the blacklist, and the connexion will be canceled.
+
+If the player needs an update, or a re-download, the server will ask the client if he consents to a download, and will launch the download.
+
+Then, the server will create a thread for the player, which will handle his main page.
+
+### Shop managing
+
+The shop is managed by a json file, listed in a database.
+
+the database check which offers each player bought, in order to prevent overbuying or claiming twice the same offer.
+
+### Game hosting
+
+Each game is host in a single thread, which can holp up to 6 players.
+
+The thread will handle the input events, the outputs, the updates of the map, and the random spawn of AMOs, build, shield and heal
