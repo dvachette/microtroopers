@@ -3,12 +3,14 @@ import os
 
 if __name__ == '__main__':
     from map import Map
+    from config import ConfigKeyMap
 else:
     from .map import Map
+    from .config import ConfigKeyMap
 
 
 class Player:
-    def __init__(self, filename, frame_width, frame_height, num_frames):
+    def __init__(self, filename, frame_width, frame_height, num_frames, keymap):
         self.spritesheet = pygame.image.load(os.path.join('assets', filename))
         self.frame_width = frame_width
         self.frame_height = frame_height
@@ -19,7 +21,7 @@ class Player:
             pygame.transform.flip(frame, True, False) for frame in self.frames
         ]
         self.current_frame = 0
-        self.x = 0
+        self.x = 100
         self.y = 0
         self.mask = pygame.mask.from_surface(self.frames[0])
         self.delay = 100  # Temps en millisecondes entre les frames
@@ -36,7 +38,8 @@ class Player:
         self.jump_speed = 5
         self.max_jump_speed = 5
         self.falling = False
-        self.step_height = 2
+        self.step_height = 3
+        self.keymap:ConfigKeyMap = keymap
     def load_frames(self):
         frames = []
         for i in range(self.num_frames):
@@ -90,39 +93,36 @@ class Player:
             self.fall_speed = 0
         for event in events:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
+                if event.key == self.keymap.key_left:
                     self.left_pressed = True
-                if event.key == pygame.K_RIGHT:
+                if event.key == self.keymap.key_right:
                     self.right_pressed = True
-                if event.key == pygame.K_UP:
+                if event.key == self.keymap.key_jump:
                     self.up_pressed = True
-                if event.key == pygame.K_DOWN:
-                    self.down_pressed = True
             if event.type == pygame.KEYUP:
-                if event.key == pygame.K_LEFT:
+                if event.key == self.keymap.key_left:
                     self.left_pressed = False
-                if event.key == pygame.K_RIGHT:
+                if event.key == self.keymap.key_right:
                     self.right_pressed = False
-                if event.key == pygame.K_UP:
+                if event.key == self.keymap.key_jump:
                     self.up_pressed = False
-                if event.key == pygame.K_DOWN:
-                    self.down_pressed = False
         if self.left_pressed:
             self.left(self.speed)
             if self.collides(map):
-                self.move(self.speed, 0)
+                self.move(0, -self.step_height)
+                if self.collides(map):
+                    self.move(0, self.step_height)
+                    self.move(self.speed, 0)
         if self.right_pressed:
             self.right(self.speed)
             if self.collides(map):
                 self.move(0, -self.step_height)
                 if self.collides(map):
-                    self.move(0, -self.step_height)
+                    self.move(0, self.step_height)
                     self.move(-self.speed, 0)
         if self.up_pressed:
             if self.on_ground(map):
                 self.is_jumping = True
-        if self.down_pressed:
-            self.move(0, self.speed)
 
     def collides(self, map):
         if map.mask.overlap(self.mask, (self.x, self.y)):

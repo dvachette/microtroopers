@@ -3,7 +3,7 @@ import os
 
 
 class Map:
-    def __init__(self, filename):
+    def __init__(self, filename, keymap):
         self.image = pygame.image.load(os.path.join('assets', filename))
         self.mask = pygame.mask.from_surface(self.image)
     def draw(self, screen):
