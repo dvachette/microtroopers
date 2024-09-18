@@ -3,43 +3,43 @@ import os
 
 if __name__ == '__main__':
     from map import Map
-    from config import ConfigKeyMap
+    from config import ConfigKeyMap, PlayerAttributes
 else:
     from .map import Map
-    from .config import ConfigKeyMap
+    from .config import ConfigKeyMap, PlayerAttributes
 
 
 class Player:
-    def __init__(self, filename, frame_width, frame_height, num_frames, keymap):
+    def __init__(self, filename, config: PlayerAttributes, keymap):
         self.spritesheet = pygame.image.load(os.path.join('assets', filename))
-        self.frame_width = frame_width
-        self.frame_height = frame_height
-        self.num_frames = num_frames
+        self.frame_width = config.frame_width
+        self.frame_height = config.frame_height
+        self.num_frames = config.num_frames
         self.frames = self.load_frames()
         self.frames_right = self.frames
         self.frames_left = [
             pygame.transform.flip(frame, True, False) for frame in self.frames
         ]
         self.current_frame = 0
-        self.x = 100
-        self.y = 0
+        self.x = config.x
+        self.y = config.y
         self.mask = pygame.mask.from_surface(self.frames[0])
-        self.delay = 100  # Temps en millisecondes entre les frames
+        self.delay = config.delay
         self.last_update = pygame.time.get_ticks()
-        self.left_pressed = False
-        self.right_pressed = False
-        self.up_pressed = False
-        self.down_pressed = False
-        self.speed = 1
-        self.max_fall_speed = 5
-        self.gravity = 1
-        self.fall_speed = 0
-        self.is_jumping = False
-        self.jump_speed = 5
-        self.max_jump_speed = 5
-        self.falling = False
-        self.step_height = 3
-        self.keymap:ConfigKeyMap = keymap
+        self.left_pressed = config.left_pressed
+        self.right_pressed = config.right_pressed
+        self.up_pressed = config.up_pressed
+        self.speed = config.speed
+        self.max_fall_speed = config.max_fall_speed
+        self.gravity = config.gravity
+        self.fall_speed = config.fall_speed
+        self.is_jumping = config.is_jumping
+        self.jump_speed = config.jump_speed
+        self.max_jump_speed = config.max_jump_speed
+        self.falling = config.falling
+        self.step_height = config.step_height
+        self.keymap: ConfigKeyMap = keymap
+
     def load_frames(self):
         frames = []
         for i in range(self.num_frames):
@@ -71,10 +71,11 @@ class Player:
         self.frames = self.frames_right
 
     def tick(self, events, map):
-        self.update()
+        if self.left_pressed or self.right_pressed:
+            self.update()
         if self.is_jumping:
             self.move(0, -self.jump_speed)
-            self.jump_speed -= 1
+            self.jump_speed -= self.gravity
             if self.jump_speed < 0:
                 self.is_jumping = False
                 self.jump_speed = self.max_jump_speed
@@ -82,10 +83,15 @@ class Player:
             while self.collides(map):
                 self.y += 1
                 self.is_jumping = False
+        if self.on_ground(map):
+            self.falling = False
+            self.jump_speed = self.max_jump_speed
         if not (self.on_ground(map) or self.is_jumping):
             self.falling = True
             self.move(0, self.fall_speed)
-            self.fall_speed = min(self.fall_speed + self.gravity, self.max_fall_speed)
+            self.fall_speed = min(
+                self.fall_speed + self.gravity, self.max_fall_speed
+            )
             while self.collides(map):
                 self.y -= 1
 
@@ -129,7 +135,7 @@ class Player:
             return True
         else:
             return False
-        
+
     def on_ground(self, map):
         if map.mask.overlap(self.mask, (self.x, self.y + 1)):
             return True
