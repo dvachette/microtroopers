@@ -126,3 +126,24 @@ the database check which offers each player bought, in order to prevent overbuyi
 Each game is host in a single thread, which can holp up to 6 players.
 
 The thread will handle the input events, the outputs, the updates of the map, and the random spawn of AMOs, build, shield and heal
+
+
+### Server logic
+
+start
+
+wait for players
+
+infinite:
+
+get inputs
+
+handle input
+
+return data (positions and explosions)
+
+:
+
+close connections
+
+end

@@ -20,3 +20,17 @@ class Map:
             print(row)
     def copy(self):
         return self.image.copy()
+
+    def explode(self, center, radius):
+        # Créer une surface avec un canal alpha (transparence)
+        mask_surface = pygame.Surface(self.image.get_size(), pygame.SRCALPHA)
+
+        # Dessiner un cercle transparent sur la surface
+        pygame.draw.circle(mask_surface, (0, 0, 0, 0), center, radius)
+
+        # Dessiner un cercle noir sur la surface pour le masque
+        pygame.draw.circle(mask_surface, (0, 0, 0, 255), center, radius)
+
+        # Appliquer la surface du masque à l'image originale
+        self.image.blit(mask_surface, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+        self.mask = pygame.mask.from_surface(self.image)

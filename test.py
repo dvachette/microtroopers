@@ -36,9 +36,29 @@ min_zoom = 1 # Min zoom level
 zoom_speed = 0.1 # Zoom speed
 ticks = 0 # Ticks counter
 now = time.time() # Time counter
-
+center = (0, 0) # Explosion center
+radius = 0 # Explosion radius
+explode = False # Explosion flag
 # Game loop
 while not done:
+    
+    with open('input.txt','r') as f:
+        data = f.read()
+    with open('input.txt','w') as f:
+        f.write('')
+    if len(data) > 0:
+        data = data.split("\n")
+        print(data)
+        if data[0] == 'exit':
+            done = True
+        elif data[0] == "explosion":
+            center = (int(data[1]), int(data[2]))
+            radius = int(data[3])
+            explode = True
+    if explode:
+        map.explode(center, radius)
+        explode = False
+    
     events = pygame.event.get() # Events
     player.tick(events, map) # Player tick
     for event in events:
@@ -52,7 +72,7 @@ while not done:
                 zoom = min(zoom + zoom_speed, max_zoom)
             if event.key == keymap.key_zoom_out:
                 zoom = max(zoom - zoom_speed, min_zoom)
-    screen.fill((0, 0, 0)) # Reset screen
+    screen.fill((0, 0, 255)) # Reset screen
     surface = map.image.copy() # Surface where the map will be drawn
     map.draw(surface) # Draw the map
     player.draw(surface) # Draw the player

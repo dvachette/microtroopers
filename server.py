@@ -28,6 +28,12 @@ class SimpleServer:
                 if not message:
                     break
                 print(f"Received message: {message.decode('utf-8')}")
+                if message.decode('utf-8') == "exit":
+                    break
+                if message.decode('utf-8') == "kill":
+                    self.broadcast("Server is shutting down", client_socket)
+                    self.server_socket.close()
+                    break
                 self.broadcast(message, client_socket)
             except Exception as e:
                 print(f"Error handling client: {e}")
@@ -38,11 +44,15 @@ class SimpleServer:
 
     def run(self):
         while True:
+            if len(self.clients) == self.max_connections:
+                print("Maximum number of connections reached")
+                break
             client_socket, client_address = self.server_socket.accept()
             print(f"New connection from {client_address}")
             self.clients.append(client_socket)
             client_thread = threading.Thread(target=self.handle_client, args=(client_socket,))
             client_thread.start()
+            
 
 # Exemple d'utilisation
 if __name__ == "__main__":
