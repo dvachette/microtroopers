@@ -154,4 +154,19 @@ the server will have a sqlite database to handle connections and manage password
 
 the game will be clock base and not fps based. 
 
+the player will always be at the center of ths screen
+
+## Modules
+
+pygame
+sys
+os
+pillow
+pytmx
+pyscroll
+sockets
+threading
+sqlite
+requests
+dataclasses
 
