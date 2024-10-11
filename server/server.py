@@ -53,7 +53,6 @@ class Server:
                 self.send(client_socket, 'LOGIN OK')
 
         while True:
-            print('Lobby loop')
             message = client_socket.recv(1024)
             message = message.decode('utf-8')
             message = message.strip().split()
