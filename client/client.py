@@ -3,6 +3,8 @@
 # The client is implemented using the pygame library and uses a menu to handle the login and registration process.
 # The client also displays the lobby and shop interfaces, and sends and receives messages from the server to update the game state.
 
+from __future__ import annotations
+
 import sys
 import threading
 import socket
@@ -51,6 +53,7 @@ class Client:
         - host: str - The host of the server.
         - port: int - The port of the server.
         """
+
         self.host = host # The host of the server
         self.port = port # The port of the server
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # The client socket to connect to the server
