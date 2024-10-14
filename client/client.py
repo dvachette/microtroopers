@@ -11,8 +11,10 @@ import socket
 
 import pygame_menu
 import pygame
+import pygame_menu.themes
 
-
+from theme import login_theme
+from pgui.widget import Button
 # Check if pygame is already initialized
 if not pygame.get_init():
     pygame.init()
@@ -42,7 +44,6 @@ class Client:
     - handle_inputs_from_server() - Handle inputs from the server.
     - lobby() - Display the lobby user interface.
     - run() - Run the client.
-
     """
 
     def __init__(self, host:str, port:int) -> None:
@@ -63,7 +64,14 @@ class Client:
         self.pause = False # The pause state of the client
         self.threads:list[threading.Thread] = list() # The list of threads for the client
 
-
+    def load_preferences(self) -> None:
+        """
+        Load the preferences of the client.
+        
+        [NIY]
+        """
+        raise NotImplementedError
+        
     def send(self, message:str) -> None:
         """
         Send a message to the server.
@@ -95,7 +103,7 @@ class Client:
         email = str() # The email of the user
         password = str() # The password of the user
 
-        self.menu = pygame_menu.Menu('Microtrooopers - login',800,600,theme=pygame_menu.themes.THEME_BLUE) # Create a menu for the login user interface
+        self.menu = pygame_menu.Menu('Microtrooopers - login',800, 600, theme=login_theme) # Create a menu for the login user interface
         self.menu.add.text_input('Email: ', default=email, maxchar=20, textinput_id='email') # Add a text input for the email
         self.menu.add.text_input('Password: ', default=password, maxchar=20, textinput_id='password', password=True) # Add a text input for the password
         self.menu.add.button('Login', self.login) # Add a button to login
@@ -223,9 +231,14 @@ class Client:
         self.threads.append(rcv_thread) # Append the thread to the list of threads
         rcv_thread.start() # Start the thread 
 
-        while not self.done: # While the client is not done, do the lobby logic
+        resume_button_topleft = (surface.get_width() / 2 - 200, surface.get_height() / 2 - 50) # Resume button topleft
+        resume_button = Button(*resume_button_topleft, 400, 50, 'Resume', self.do_unpause, font_color=(255, 255, 255), bg_color=(0, 0, 0, 255), outline_color=(255, 255, 255)) # Create a resume button
+        exit_button_topleft = (surface.get_width() / 2 - 200, surface.get_height() / 2 + 50) # Exit button topleft
+        exit_button = Button(*exit_button_topleft, 400, 50, 'Exit', self.stop, font_color=(255, 255, 255), bg_color=(0, 0, 0, 255), outline_color=(255, 255, 255)) # Create an exit button
 
-            for event in pygame.event.get(): # keyboard events handling loop
+        while not self.done: # While the client is not done, do the lobby logic
+            events = pygame.event.get() # Get the events (exit manager)
+            for event in events: # keyboard events handling loop
                 if event.type == pygame.QUIT:
                     self.done = True
                     self.send('QUIT')
@@ -253,42 +266,21 @@ class Client:
                 surface_filter.set_alpha(128)
                 surface_filter.fill((0, 0, 0))
                 surface.blit(surface_filter, (0, 0))
-
+                
                 # Resume button
-                resume_text = pygame.font.Font(None, 50).render('Resume', True, (255, 255, 255))
-                surface.blit(resume_text,
-                        ((surface.get_width() / 2) - (resume_text.get_width() / 2),
-                        (surface.get_height() / 2) - (resume_text.get_height() / 2) + 50))
-                resume_button = resume_text.get_rect()
-                resume_button.topleft = (
-                    (surface.get_width() / 2) - (resume_text.get_width() / 2),
-                    (surface.get_height() / 2) - (resume_text.get_height() / 2) + 50,
-                )
-                pygame.draw.rect(surface, (255, 255, 255), resume_button.inflate(10, 10), 2)
+                resume_button.draw(surface)
+                
 
                 # Exit button
-                exit_text = pygame.font.Font(None, 50).render('Exit', True, (255, 255, 255))
-                surface.blit(exit_text,
-                    ((surface.get_width() / 2) - (exit_text.get_width() / 2),
-                    (surface.get_height() / 2) - (exit_text.get_height() / 2) - 50))
-                exit_button = exit_text.get_rect()
-                exit_button.topleft = (
-                    (surface.get_width() / 2) - (exit_text.get_width() / 2),
-                    (surface.get_height() / 2) - (exit_text.get_height() / 2) - 50,
-                )
-                pygame.draw.rect(surface, (255, 255, 255), exit_button.inflate(10, 10), 2)
+                exit_button.draw(surface)
+
+
+                resume_button.handle_event(events)
+                exit_button.handle_event(events)
 
                 # Handle button clicks
-                if resume_button.collidepoint(pygame.mouse.get_pos()):
-                    if pygame.mouse.get_pressed()[0]:
-                        self.pause = False
+                
 
-                if exit_button.collidepoint(pygame.mouse.get_pos()):
-                    if pygame.mouse.get_pressed()[0]:
-                        self.done = True
-                        self.send('QUIT')
-                        pygame.quit()
-                        sys.exit()
 
             
             pygame.display.flip() # Update the display
@@ -304,6 +296,22 @@ class Client:
         self.login_ui()
         print('[DBG] from client.py.Client.run : login_ui done')
         self.lobby()
+
+    def do_unpause(self) -> None:
+        """
+        Pause the client.
+        """
+        self.pause = False
+    def do_pause(self) -> None:
+        """
+        Unpause the client.
+        """
+        self.pause = True
+    def stop(self):
+        self.done = True
+        self.send('QUIT')
+        pygame.quit()
+        sys.exit()
 
 
 client = Client(HOST, PORT)

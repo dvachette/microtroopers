@@ -80,5 +80,33 @@ class Widget:
         return self.rect.collidepoint(*coords)
     
 
-
-Widget
+class Button(Widget):
+    def __init__(self, x, y, width, height, text, action, font:str="Calibri", font_color:tuple[int]=(0, 0, 0), bg_color:tuple[int]=(88, 88, 88), outline_color:tuple[int]=(0, 0, 0), font_size:int=30):
+        super().__init__(x, y, width, height)
+        self.text = text
+        self.font = font
+        self.font_color = font_color
+        self.bg_color = bg_color
+        self.action = action
+        self.rect = pygame.Rect(x, y, width, height)
+        self.font = pygame.font.SysFont(font, font_size)
+        self.font_size = font_size
+        self.outline_color = outline_color
+        
+    def draw(self, screen):
+        if self.visible:
+            color = self.bg_color
+            if self.rect.collidepoint(*pygame.mouse.get_pos()):
+                color = (color[0] + 50, color[1] + 50, color[2] + 50)
+            pygame.draw.rect(screen, color, self.rect)
+            pygame.draw.rect(screen, self.outline_color, self.rect, 2)
+            text = self.font.render(self.text, True, self.font_color)
+            text_rect = text.get_rect(center=self.rect.center)
+            screen.blit(text, text_rect)
+    
+    def handle_event(self, events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self.rect.collidepoint(*event.pos):
+                    self.action()
+        
