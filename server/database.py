@@ -230,16 +230,17 @@ class Database:
         player = self.login(email, password)
         # add the player's weapons to the player_weapons table
         player.balance = 0
-        player.add_weapon(Weapon(0))
-        player.add_weapon(Weapon(1))
-        player.add_weapon(Weapon(2))
+        player.add_weapon(Weapon(0, self))
+        player.add_weapon(Weapon(1, self))
+        player.add_weapon(Weapon(2, self))
 
         # add the player's cosmetics to the player_cosmetics table
-        player.add_cosmetic(Cosmetic(0))
+        player.add_cosmetic(Cosmetic(0, self))
 
         # ? add the player to the game_setup table
         self.execute('INSERT INTO game_setup (player_id) VALUES ((SELECT id FROM players WHERE email = ?))', (email,))
-
+        print(f'[DBG] from database.py.Database.add_player : {player=}')
+        print(f'[DBG] from database.py.Database.add_player : players={self.execute("SELECT * FROM players").fetchall()}')
 
     def login(self, email:str, password:str) -> 'Player'|int:
         """ 
@@ -257,7 +258,7 @@ class Database:
         user = self.execute('SELECT * FROM players WHERE email = ?', (email,)).fetchone()
         print(f'[DBG] from database.py.Database.login :  {user=}')
         if user and check_password_hash(user[3], password):
-            return Player(user[0])
+            return Player(user[0], self)
         return -1
 
 class Player:
@@ -287,7 +288,7 @@ class Player:
     - add_cosmetic(cosmetic:Cosmetic) - Adds a cosmetic to the player's inventory
 
     """
-    def __init__(self, id_:int) -> None:
+    def __init__(self, id_:int, database:Database) -> None:
         """
         The constructor for the Player class. It initializes the db attribute with a Database object
         and the id attribute with the player's ID.
@@ -295,7 +296,7 @@ class Player:
         ## Arguments:
         - id_:int - The player's ID
         """
-        self.db = Database()
+        self.db = database
         self.id = id_
         self.inventory:list["Weapon"] = []
 
@@ -341,15 +342,15 @@ class Player:
 
     @property
     def weapons(self) -> list["Weapon"]:
-        return [Weapon(weapon[0]) for weapon in self.db.execute('SELECT id_weapon FROM player_weapons WHERE id_player = ?', (self.id,)).fetchall()]
+        return [Weapon(weapon[0], self.db) for weapon in self.db.execute('SELECT id_weapon FROM player_weapons WHERE id_player = ?', (self.id,)).fetchall()]
     
     @property
     def cosmetics(self) -> list["Cosmetic"]:
-        return [Cosmetic(cosmetic[0]) for cosmetic in self.db.execute('SELECT id_cosmetic FROM player_cosmetics WHERE id_player = ?', (self.id,)).fetchall()]
+        return [Cosmetic(cosmetic[0], self.bd) for cosmetic in self.db.execute('SELECT id_cosmetic FROM player_cosmetics WHERE id_player = ?', (self.id,)).fetchall()]
     
     @property
     def friends(self) -> list["Player"]:
-        return [Player(friend[0]) for friend in self.db.execute('SELECT id_player_b FROM friends WHERE id_player_a = ?', (self.id,)).fetchall()]
+        return [Player(friend[0], self.bd) for friend in self.db.execute('SELECT id_player_b FROM friends WHERE id_player_a = ?', (self.id,)).fetchall()]
 
     def add_friend(self, friend: 'Player') -> None:
         self.db.execute('INSERT INTO friends (id_player_a, id_player_b) VALUES (?, ?)', (self.id, friend.id))
@@ -388,11 +389,8 @@ class Cosmetic:
     - __init__(id_:int) - The constructor for the Cosmetic class
     """
 
-    def __init__(self, id_:int, database:str|None=None) -> None:
-        if database is not None:
-            self.db = Database(database)
-        else:
-            self.db = Database()
+    def __init__(self, id_:int, database:Database) -> None:
+        self.db =database
         self.id = id_
     
     @property
@@ -439,11 +437,8 @@ class Weapon:
     ## Methods:
     - __init__(id_:int) - The constructor for the Weapon class
     """
-    def __init__(self, id_:int, database:str|None=None) -> None:
-        if database is not None:
-            self.db = Database(database)
-        else:
-            self.db = Database()
+    def __init__(self, id_:int, database:Database) -> None:
+        self.db = database
         self.id = id_
     
     @property

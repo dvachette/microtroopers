@@ -106,39 +106,34 @@ class Server:
         login_form = client_socket.recv(1024) # Message recieving from the client
         login_form = login_form.decode('utf-8') # Decoding the message
         login_form = login_form.strip().split() # Splitting the message
-
-        # error handling
-        if not login_form:
+        # REGISTER NEW USER
+        print(f'[DBG] from server.py.Server.lobby : {login_form=}')
+        if login_form == ["quit"]:
+            print(f'[DBG] from server.py.Server.lobby : Client {client_socket} disconnected')
+            self.clients.remove(client_socket)
+            client_socket.close()
             return
-        if len(login_form) != 2:
-            self.send(client_socket, 'LOGIN ERROR')
-            return
-        
-        # Getting the email and password from the message, and trying to login
-        email = login_form[0]
-        password = login_form[1]
-        print(f'[DBG] from server.py.Server.lobby : {email=}, {password=}')
-        user = self.db.login(email, password)
-        if user == -1:
-            self.send(client_socket, 'LOGIN ERROR')
+        if login_form[0] == 'REGISTER':
+            username = login_form[1]
+            email = login_form[2]
+            password = login_form[3]
+            print(f'[DBG] from server.py.Server.lobby : {email=}, {password=}')
+            self.db.add_player(username, email, password)
+            user = self.db.login(email, password)
+            if user == -1:
+                self.send(client_socket, 'REGISTER ERROR')
+            else:
+                self.send(client_socket, 'REGISTER OK')
+            print(f'[DBG] from server.py.Server.lobby : {user=}')
         else:
-            self.send(client_socket, 'LOGIN OK')
-        print(f'[DBG] from server.py.Server.login : {user=}')
-
-        # Loop for the client if the authentication is not successful at first
-        while user == -1:
-            print(f'[DBG] from server.py.Server.lobby : starting login loop for client {client_socket}')
-            login_form = client_socket.recv(1024)
-            login_form = login_form.decode('utf-8')
-            login_form = login_form.strip().split()
-
             # error handling
             if not login_form:
                 return
             if len(login_form) != 2:
                 self.send(client_socket, 'LOGIN ERROR')
                 return
-
+        
+            # Getting the email and password from the message, and trying to login
             email = login_form[0]
             password = login_form[1]
             print(f'[DBG] from server.py.Server.lobby : {email=}, {password=}')
@@ -148,6 +143,30 @@ class Server:
             else:
                 self.send(client_socket, 'LOGIN OK')
             print(f'[DBG] from server.py.Server.login : {user=}')
+
+            # Loop for the client if the authentication is not successful at first
+            while user == -1:
+                print(f'[DBG] from server.py.Server.lobby : starting login loop for client {client_socket}')
+                login_form = client_socket.recv(1024)
+                login_form = login_form.decode('utf-8')
+                login_form = login_form.strip().split()
+
+                # error handling
+                if not login_form:
+                    return
+                if len(login_form) != 2:
+                    self.send(client_socket, 'LOGIN ERROR')
+                    return
+
+                email = login_form[0]
+                password = login_form[1]
+                print(f'[DBG] from server.py.Server.lobby : {email=}, {password=}')
+                user = self.db.login(email, password)
+                if user == -1:
+                    self.send(client_socket, 'LOGIN ERROR')
+                else:
+                    self.send(client_socket, 'LOGIN OK')
+                print(f'[DBG] from server.py.Server.login : {user=}')
         
         # Loop for the client if the user is logged in
         while True:

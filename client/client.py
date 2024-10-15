@@ -99,6 +99,7 @@ class Client:
 
         The login user interface allows the user to enter their email and password to login to the game.
         """
+        self.state = 'login' # Set the state to login
         surface = pygame.display.set_mode((800,600)) # Set the display surface
         email = str() # The email of the user
         password = str() # The password of the user
@@ -109,7 +110,7 @@ class Client:
         self.menu.add.button('Login', self.login) # Add a button to login
 
         # TODO make the register button work
-        self.menu.add.button('Register', lambda:None) # * Add a button to register [NIY]
+        self.menu.add.button('Register', self.register_ui) # * Add a button to register [NIY]
 
         while self.state == 'login': # While the state is login, display the login user interface
             events = pygame.event.get() # Get the events (exit manager)
@@ -124,13 +125,57 @@ class Client:
 
         print("[DBG] from client.py.Client.login : login_ui.done")
 
-    def register(self) -> None:
+    def register_ui(self) -> None:
         """
         Register a new user.
         
-        [NIY]
         """
-        raise NotImplementedError
+        self.state = 'register'
+        surface = pygame.display.set_mode((800,600))
+        username = str()
+        email = str()
+        password = str()
+        self.menu = pygame_menu.Menu('Microtrooopers - register',800, 600, theme=login_theme)
+        self.menu.add.text_input('Username: ', default=username, maxchar=20, textinput_id='username')
+        self.menu.add.text_input('Email: ', default=email, maxchar=20, textinput_id='email')
+        self.menu.add.text_input('Password: ', default=password, maxchar=20, textinput_id='password', password=True)
+        self.menu.add.button('Register', self.register)
+        self.menu.add.button('Back', self.login_ui)
+        while self.state == 'register':
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
+                    self.send('QUIT')
+                    pygame.quit()
+                    sys.exit()
+            self.menu.update(events)
+            self.menu.draw(surface)
+            pygame.display.flip()
+        self.state = 'lobby'
+        
+    def register(self) -> None:
+        """
+        Register a new user.
+
+        The register method sends the username, email, and password to the server to register a new user.
+
+        There is no need to have the username, email, and password as arguments because the data is already stored in the menu object.
+        """
+        data:dict = self.menu.get_input_data()
+
+        if not data['username'] or not data['email'] or not data['password']:
+            return
+        print("[DBG] from client.py.Client.register : Registering user")
+        print(f"[DBG] from client.py.Client.register : {data=}")
+        self.send(f"REGISTER {data['username']} {data['email']} {data['password']}")
+        response = self.receive()
+        if response == 'REGISTER ERROR':
+            print('[DBG] from client.py.Client.register : Register failed')
+        else:   
+            print('[DBG] from client.py.Client.register : Register success')
+            self.menu.close()
+            self.state = 'lobby'
+            
 
     def login(self) -> None:
         """
