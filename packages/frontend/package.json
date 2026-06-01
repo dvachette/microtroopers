@@ -8,6 +8,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@microtroopers/shared": "*"
+    "@microtroopers/shared": "*",
+    "vue": "^3.5.35"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.7",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16",
+    "vue-tsc": "^3.3.3"
   }
 }

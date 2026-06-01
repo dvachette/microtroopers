@@ -8,6 +8,21 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@microtroopers/shared": "*"
+    "@microtroopers/shared": "*",
+    "@prisma/client": "^7.8.0",
+    "bcrypt": "^6.0.0",
+    "express": "^5.2.1",
+    "ioredis": "^5.11.0",
+    "jsonwebtoken": "^9.0.3",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/ws": "^8.18.1",
+    "prisma": "^7.8.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^6.0.3"
   }
 }
