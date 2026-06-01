@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Utilisateur {
+  id            String    @id @default(uuid())
+  rowId         Int       @unique @default(autoincrement())
+  pseudo        String    @unique
+  passwordHash  String
+  createdAt     DateTime  @default(now())
+  administrator Boolean   @default(false)
+  deleted       Boolean   @default(false)
+  balanceGold   Int       @default(0)
+  balanceGems   Int       @default(0)
+
+  inventory          Inventory[]
+  matchPlayers       MatchPlayer[]
+  transactions       Transaction[]
+  shopOrders         ShopOrder[]
+  shopDailyPurchases ShopDailyPurchase[]
+  wonMatches         Match[]
+}
+
+model Inventory {
+  id     Int    @id @default(autoincrement())
+  userId String
+  item   String
+
+  user Utilisateur @relation(fields: [userId], references: [id])
+
+  @@unique([userId, item])
+}
+
+model Match {
+  id          String    @id @default(uuid())
+  createdAt   DateTime  @default(now())
+  endedAt     DateTime?
+  mode        MatchMode
+  mapId       String
+  winnerId    String?
+  winningTeam Int?
+
+  players MatchPlayer[]
+  winner  Utilisateur?  @relation(fields: [winnerId], references: [id])
+}
+
+model MatchPlayer {
+  id        Int  @id @default(autoincrement())
+  matchId   String
+  userId    String
+  team      Int?
+  placement Int?
+  kills     Int  @default(0)
+  deaths    Int  @default(0)
+
+  match Match       @relation(fields: [matchId], references: [id])
+  user  Utilisateur @relation(fields: [userId], references: [id])
+
+  @@unique([matchId, userId])
+}
+
+model Transaction {
+  id        String            @id @default(uuid())
+  userId    String
+  amount    Int
+  currency  Currency
+  reason    TransactionReason
+  refId     String?
+  createdAt DateTime          @default(now())
+
+  user Utilisateur @relation(fields: [userId], references: [id])
+}
+
+model ShopListing {
+  id                String          @id @default(uuid())
+  item              String
+  price             Int
+  currency          Currency
+  type              ShopListingType
+  dailyLimitPerUser Int?
+  availableFrom     DateTime?
+  availableUntil    DateTime?
+  createdAt         DateTime        @default(now())
+
+  orders         ShopOrder[]
+  dailyPurchases ShopDailyPurchase[]
+}
+
+model ShopOrder {
+  id        String   @id @default(uuid())
+  userId    String
+  listingId String
+  price     Int
+  currency  Currency
+  createdAt DateTime @default(now())
+
+  user    Utilisateur @relation(fields: [userId], references: [id])
+  listing ShopListing @relation(fields: [listingId], references: [id])
+}
+
+model ShopDailyPurchase {
+  userId    String
+  listingId String
+  date      DateTime @db.Date
+  count     Int      @default(0)
+
+  user    Utilisateur @relation(fields: [userId], references: [id])
+  listing ShopListing @relation(fields: [listingId], references: [id])
+
+  @@id([userId, listingId, date])
+}
+
+enum MatchMode {
+  solo
+  team
+}
+
+enum Currency {
+  gold
+  gems
+}
+
+enum TransactionReason {
+  match_reward
+  shop_purchase
+  event
+  admin
+}
+
+enum ShopListingType {
+  permanent
+  daily
+}
