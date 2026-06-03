@@ -1,4 +1,4 @@
-import { ClientMessage } from '@microtroopers/shared';
+import { ClientMessage } from '@microtroopers/shared/src';
 import { Client, sendTo } from './index';
 import { roomManager } from '../game/RoomManager';
 
@@ -26,7 +26,7 @@ const handleJoinLobby = (client: Client, message: Extract<ClientMessage, { type:
 
     if (!room) room = roomManager.create();
 
-    const joined = room.addPlayer(client.userId, client.userId); // pseudo à récupérer depuis DB
+    const joined = room.addPlayer(client.userId, client.pseudo); // pseudo à récupérer depuis DB
     if (!joined) {
         sendTo(client, { type: 'error', code: 'ROOM_FULL', message: 'Room is full or already started' });
         return;

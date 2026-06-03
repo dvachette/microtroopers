@@ -1,11 +1,16 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { Server } from 'http';
+import { Server, IncomingMessage } from 'http';
 import { ClientMessage } from '@microtroopers/shared/src';
 import { handleMessage } from './handlers';
+import { parse } from 'cookie';
+import jwt from 'jsonwebtoken';
+import config from '../config';
+import prisma from '../db';
 
 export type Client = {
     ws: WebSocket;
     userId: string;
+    pseudo: string;
     roomId: string | null;
 };
 
@@ -14,17 +19,48 @@ const clients = new Map<WebSocket, Client>();
 export const getClient = (ws: WebSocket): Client | undefined => clients.get(ws);
 export const getClients = (): Map<WebSocket, Client> => clients;
 
+const extractUserId = (req: IncomingMessage): { userId: string; } | null => {
+    const cookieHeader = req.headers.cookie;
+    if (!cookieHeader) return null;
+
+    const cookies = parse(cookieHeader);
+    const token = cookies['access_token'];
+    if (!token) return null;
+
+    try {
+        const payload = jwt.verify(token, config.jwtSecret) as { userId: string };
+        return { userId: payload.userId };
+    } catch {
+        return null;
+    }
+};
+
 export const initWS = (server: Server): void => {
     const wss = new WebSocketServer({ server });
 
-    wss.on('connection', (ws: WebSocket, req) => {
-        // TODO: extraire userId depuis le cookie JWT à la connexion
-        const userId = 'anonymous'; // remplacé après auth WS
+    wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+        const auth = extractUserId(req);
 
-        const client: Client = { ws, userId, roomId: null };
+        if (!auth) {
+            ws.close(4001, 'Unauthorized');
+            return;
+        }
+
+        const client: Client = { ws, userId: auth.userId, pseudo: '', roomId: null };
         clients.set(ws, client);
 
-        console.log(`[WS] Client connected: ${userId}`);
+        console.log(`[WS] Client connected: ${auth.userId}`);
+
+
+        // Récupérer le pseudo en async
+        prisma.utilisateur.findUnique({
+            where: { id: auth.userId },
+            select: { pseudo: true },
+        }).then(user => {
+            if (!user) { ws.close(4002, 'User not found'); return; }
+            client.pseudo = user.pseudo;
+        }).catch(() => ws.close(4003, 'DB error'));
+
 
         ws.on('message', (data) => {
             try {
@@ -36,12 +72,12 @@ export const initWS = (server: Server): void => {
         });
 
         ws.on('close', () => {
-            console.log(`[WS] Client disconnected: ${userId}`);
+            console.log(`[WS] Client disconnected: ${auth.userId}`);
             clients.delete(ws);
         });
 
         ws.on('error', (err) => {
-            console.error(`[WS] Error for ${userId}:`, err);
+            console.error(`[WS] Error for ${auth.userId}:`, err);
         });
     });
 
