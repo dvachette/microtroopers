@@ -9,7 +9,7 @@ app.use(cookieParser());
 
 app.use('/auth', authRouter);
 
-const PORT = 3000;
+const PORT = 3020;
 app.listen(PORT, () => {
   console.log(`[Server] Running on port ${PORT}`);
 });

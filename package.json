@@ -9,6 +9,7 @@
   "scripts": {
     "dev:backend": "npm run dev -w packages/backend",
     "dev:frontend": "npm run dev -w packages/frontend",
+    "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres redis",
     "build": "npm run build -w packages/shared && npm run build -w packages/backend && npm run build -w packages/frontend"
   },
   "engines": {

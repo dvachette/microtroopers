@@ -66,7 +66,8 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     setAuthCookies(res, accessToken, refreshToken);
 
     res.status(201).json({ userId: user.id, pseudo: user.pseudo });
-  } catch {
+  } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -3,7 +3,7 @@ services:
     build: ./packages/backend
     restart: unless-stopped
     ports:
-      - "3020:3000"
+      - "3020:3020"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://mt_user:${POSTGRES_PASSWORD}@postgres:5432/microtroopers
